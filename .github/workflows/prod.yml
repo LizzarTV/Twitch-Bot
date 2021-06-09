@@ -73,14 +73,14 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: toxictoast/inventory-category:latest
+          tags: toxictoast/twitch-bot:latest
 
       - name: Build and push to build
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: toxictoast/inventory-category:build-${{ steps.buildId.outputs.build_number  }}
+          tags: toxictoast/twitch-bot:build-${{ steps.buildId.outputs.build_number  }}
 
 
       - name: Image digest
