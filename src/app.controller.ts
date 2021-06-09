@@ -18,7 +18,13 @@ export class AppController
   private apiClient: ApiClient;
   private chatClient: ChatClient;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {
+    const clientId = this.configService.get<string>('TWITCH_CLIENT_ID', '')
+    const accessToken = this.configService.get<string>('TWITCH_ACCESS_TOKEN', '');
+    const channelsString = this.configService.get<string>('TWITCH_CHANNELS', '');
+
+    Logger.debug({ clientId, accessToken, channelsString }, 'App')
+  }
 
   public async onApplicationBootstrap(): Promise<void> {
     Logger.debug('Application bootstraps...', 'TwitchBot');
