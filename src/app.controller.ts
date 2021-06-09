@@ -54,6 +54,7 @@ export class AppController
     const channels = channelsString.split(',');
     this.chatClient = new ChatClient(this.authProvider, {
       channels: [...channels],
+      requestMembershipEvents: true,
     });
   }
 
