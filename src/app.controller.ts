@@ -97,7 +97,9 @@ export class AppController
         .toPromise()
         .catch((error) => {
           Logger.error(error, 'Join');
-        });
+        }).then(() => {
+          Logger.debug({ channel, user }, 'Join');
+      });
     });
   }
 
@@ -111,7 +113,9 @@ export class AppController
         .toPromise()
         .catch((error) => {
           Logger.error(error, 'Part');
-        });
+        }).then(() => {
+        Logger.debug({ channel, user }, 'Part');
+      });
     });
   }
 
