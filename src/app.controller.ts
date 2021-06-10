@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { ApiClient } from 'twitch';
 import { StaticAuthProvider } from 'twitch-auth';
-import { ChatClient } from 'twitch-chat-client';
 import { TwitchPrivateMessage } from 'twitch-chat-client/lib/StandardCommands/TwitchPrivateMessage';
 import { ConfigService } from '@nestjs/config';
 
@@ -17,7 +16,6 @@ export class AppController
 {
   private authProvider: StaticAuthProvider;
   private apiClient: ApiClient;
-  private chatClient: ChatClient;
 
   private readonly twitchClient: string;
   private readonly twitchToken: string;
