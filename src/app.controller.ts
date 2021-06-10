@@ -1,14 +1,15 @@
 import {
-  Controller, HttpService,
+  Controller,
+  HttpService,
   Logger,
   OnApplicationBootstrap,
-  OnApplicationShutdown
-} from "@nestjs/common";
+  OnApplicationShutdown,
+} from '@nestjs/common';
 import { ApiClient } from 'twitch';
 import { StaticAuthProvider } from 'twitch-auth';
 import { ChatClient } from 'twitch-chat-client';
 import { TwitchPrivateMessage } from 'twitch-chat-client/lib/StandardCommands/TwitchPrivateMessage';
-import { ConfigService } from "@nestjs/config";
+import { ConfigService } from '@nestjs/config';
 
 @Controller()
 export class AppController
@@ -18,7 +19,27 @@ export class AppController
   private apiClient: ApiClient;
   private chatClient: ChatClient;
 
-  constructor(private readonly configService: ConfigService, private readonly httpService: HttpService) { }
+  private readonly twitchClient: string;
+  private readonly twitchToken: string;
+  private readonly channels: string[];
+  private readonly daprPort: number;
+  private readonly daprBaseUrl: string;
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
+  ) {
+    this.twitchClient = this.configService.get<string>('TWITCH_CLIENT_ID', '');
+    this.twitchToken = this.configService.get<string>(
+      'TWITCH_ACCESS_TOKEN',
+      '',
+    );
+    this.channels = this.configService
+      .get<string>('TWITCH_CHANNELS', '')
+      .split(',');
+    this.daprPort = this.configService.get<number>('DAPR_HTTP_PORT', 3500);
+    this.daprBaseUrl = `http://localhost:${this.daprPort}/v1.0/invoke/`;
+  }
 
   public async onApplicationBootstrap(): Promise<void> {
     Logger.debug('Application bootstraps...', 'TwitchBot');
@@ -34,9 +55,10 @@ export class AppController
   }
 
   private setupAuthProvider(): void {
-    const clientId = this.configService.get<string>('TWITCH_CLIENT_ID', '')
-    const accessToken = this.configService.get<string>('TWITCH_ACCESS_TOKEN', '');
-    this.authProvider = new StaticAuthProvider(clientId, accessToken);
+    this.authProvider = new StaticAuthProvider(
+      this.twitchClient,
+      this.twitchToken,
+    );
   }
 
   private setupApiClient(): void {
@@ -44,10 +66,8 @@ export class AppController
   }
 
   private setupChatClient(): void {
-    const channelsString = this.configService.get<string>('TWITCH_CHANNELS', '');
-    const channels = channelsString.split(',');
     this.chatClient = new ChatClient(this.authProvider, {
-      channels: [...channels],
+      channels: [...this.channels],
       requestMembershipEvents: true,
     });
   }
@@ -69,21 +89,29 @@ export class AppController
 
   private async joinEvent(): Promise<void> {
     this.chatClient.onJoin((channel: string, user: string) => {
-      const daprPort = this.configService.get<number>('DAPR_HTTP_PORT', 3500);
-      this.httpService.post(`http://localhost:${daprPort}/v1.0/invoke/twitch-users/method/join`, { channel, user }).toPromise().catch(error => {
-        Logger.error(error, 'Join');
-      });
-      Logger.debug({ channel, user }, 'Join');
+      this.httpService
+        .post(
+          `${this.daprBaseUrl}/twitch-users/method/join`,
+          { channel, user },
+        )
+        .toPromise()
+        .catch((error) => {
+          Logger.error(error, 'Join');
+        });
     });
   }
 
   private async partEvent(): Promise<void> {
     this.chatClient.onPart((channel: string, user: string) => {
-      const daprPort = this.configService.get<number>('DAPR_HTTP_PORT', 3500);
-      this.httpService.post(`http://localhost:${daprPort}/v1.0/invoke/twitch-users/method/part`, { channel, user }).toPromise().catch(error => {
-        Logger.error(error, 'Part');
-      });
-      Logger.debug({ channel, user }, 'Part');
+      this.httpService
+        .post(
+          `${this.daprBaseUrl}/twitch-users/method/part`,
+          { channel, user },
+        )
+        .toPromise()
+        .catch((error) => {
+          Logger.error(error, 'Part');
+        });
     });
   }
 
