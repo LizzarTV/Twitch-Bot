@@ -75,7 +75,8 @@ export class AppController
 
   private async joinEvent(): Promise<void> {
     this.chatClient.onJoin((channel: string, user: string) => {
-      this.httpService.post('http://localhost:3500/v1.0/invoke/twitch-users/method/userJoined').toPromise().catch(error => {
+      const daprPort = this.configService.get<number>('DAPR_HTTP_PORT', 3500);
+      this.httpService.post(`http://localhost:${daprPort}/v1.0/invoke/twitch-users/method/join`).toPromise().catch(error => {
         Logger.error(error, 'Join');
       }).then(data => {
         Logger.debug(data, 'Join');
