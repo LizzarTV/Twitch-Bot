@@ -18,13 +18,7 @@ export class AppController
   private apiClient: ApiClient;
   private chatClient: ChatClient;
 
-  constructor(private readonly configService: ConfigService, private readonly httpService: HttpService) {
-    const clientId = this.configService.get<string>('TWITCH_CLIENT_ID', '')
-    const accessToken = this.configService.get<string>('TWITCH_ACCESS_TOKEN', '');
-    const channelsString = this.configService.get<string>('TWITCH_CHANNELS', '');
-
-    Logger.debug({ clientId, accessToken, channelsString }, 'App')
-  }
+  constructor(private readonly configService: ConfigService, private readonly httpService: HttpService) { }
 
   public async onApplicationBootstrap(): Promise<void> {
     Logger.debug('Application bootstraps...', 'TwitchBot');
@@ -76,10 +70,8 @@ export class AppController
   private async joinEvent(): Promise<void> {
     this.chatClient.onJoin((channel: string, user: string) => {
       const daprPort = this.configService.get<number>('DAPR_HTTP_PORT', 3500);
-      this.httpService.post(`http://localhost:${daprPort}/v1.0/invoke/twitch-users/method/join`).toPromise().catch(error => {
+      this.httpService.post(`http://localhost:${daprPort}/v1.0/invoke/twitch-users/method/join`, { channel, user }).toPromise().catch(error => {
         Logger.error(error, 'Join');
-      }).then(data => {
-        Logger.debug(data, 'Join');
       });
       Logger.debug({ channel, user }, 'Join');
     });
@@ -88,10 +80,8 @@ export class AppController
   private async partEvent(): Promise<void> {
     this.chatClient.onPart((channel: string, user: string) => {
       const daprPort = this.configService.get<number>('DAPR_HTTP_PORT', 3500);
-      this.httpService.post(`http://localhost:${daprPort}/v1.0/invoke/twitch-users/method/part`).toPromise().catch(error => {
+      this.httpService.post(`http://localhost:${daprPort}/v1.0/invoke/twitch-users/method/part`, { channel, user }).toPromise().catch(error => {
         Logger.error(error, 'Part');
-      }).then(data => {
-        Logger.debug(data, 'Part');
       });
       Logger.debug({ channel, user }, 'Part');
     });
