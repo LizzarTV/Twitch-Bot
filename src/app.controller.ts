@@ -87,6 +87,12 @@ export class AppController
 
   private async partEvent(): Promise<void> {
     this.chatClient.onPart((channel: string, user: string) => {
+      const daprPort = this.configService.get<number>('DAPR_HTTP_PORT', 3500);
+      this.httpService.post(`http://localhost:${daprPort}/v1.0/invoke/twitch-users/method/part`).toPromise().catch(error => {
+        Logger.error(error, 'Part');
+      }).then(data => {
+        Logger.debug(data, 'Part');
+      });
       Logger.debug({ channel, user }, 'Part');
     });
   }
