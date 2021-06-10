@@ -1,9 +1,9 @@
 import {
-  Controller,
+  Controller, HttpService,
   Logger,
   OnApplicationBootstrap,
-  OnApplicationShutdown,
-} from '@nestjs/common';
+  OnApplicationShutdown
+} from "@nestjs/common";
 import { ApiClient } from 'twitch';
 import { StaticAuthProvider } from 'twitch-auth';
 import { ChatClient } from 'twitch-chat-client';
@@ -18,7 +18,7 @@ export class AppController
   private apiClient: ApiClient;
   private chatClient: ChatClient;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly configService: ConfigService, private readonly httpService: HttpService) {
     const clientId = this.configService.get<string>('TWITCH_CLIENT_ID', '')
     const accessToken = this.configService.get<string>('TWITCH_ACCESS_TOKEN', '');
     const channelsString = this.configService.get<string>('TWITCH_CHANNELS', '');
@@ -75,6 +75,11 @@ export class AppController
 
   private async joinEvent(): Promise<void> {
     this.chatClient.onJoin((channel: string, user: string) => {
+      this.httpService.post('http://localhost:3500/v1.0/invoke/twitch-users/method/userJoined').toPromise().catch(error => {
+        Logger.error(error, 'Join');
+      }).then(data => {
+        Logger.debug(data, 'Join');
+      });
       Logger.debug({ channel, user }, 'Join');
     });
   }
